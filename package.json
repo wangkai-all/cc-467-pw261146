@@ -1,0 +1,15 @@
+{
+  "name": "field-level-lineage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "字段级血缘登记、版本化影响分析与迁移跟踪（零依赖 Node.js 实现）",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node src/seed.js",
+    "test": "node --test test/"
+  }
+}

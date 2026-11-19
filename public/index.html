@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>字段级血缘登记与影响分析</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>字段级血缘登记与影响分析</h1>
+      <p class="sub">来源字段 · 转换表达式 · 模型列 · 报表指标 —— 全链路版本可追溯</p>
+    </div>
+    <div id="health" class="health"></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="graph">血缘图</button>
+    <button class="tab" data-tab="diff">版本差异</button>
+    <button class="tab" data-tab="impact">影响与迁移</button>
+    <button class="tab" data-tab="register">登记台</button>
+  </nav>
+
+  <!-- ================= 血缘图 ================= -->
+  <section class="panel active" id="tab-graph">
+    <div class="toolbar">
+      <label>历史快照血缘版本
+        <select id="snapshot-version"></select>
+      </label>
+      <button id="btn-reset-focus" class="ghost" hidden>显示全图（取消聚焦）</button>
+      <span id="focus-hint" class="hint"></span>
+      <span class="spacer"></span>
+      <span class="legend">
+        <i class="dot source"></i>来源
+        <i class="dot model"></i>模型
+        <i class="dot report"></i>报表
+        <i class="dot deleted"></i>已删除
+        <i class="badge drift">版本漂移</i>
+        <i class="badge blocked">迁移阻断</i>
+      </span>
+    </div>
+    <div id="graph-wrap" class="graph-wrap">
+      <svg id="lineage-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div id="edge-detail" class="edge-detail" hidden></div>
+  </section>
+
+  <!-- ================= 版本差异 ================= -->
+  <section class="panel" id="tab-diff">
+    <div class="toolbar">
+      <label>从版本 <input type="number" id="diff-from" min="0" value="0" /></label>
+      <label>到版本 <input type="number" id="diff-to" min="0" /></label>
+      <button id="btn-diff">对比</button>
+      <span class="hint">留空“到版本”表示当前最新版本；最新版本之后的改名/删除也会列出。</span>
+    </div>
+    <div id="diff-result"></div>
+  </section>
+
+  <!-- ================= 影响与迁移 ================= -->
+  <section class="panel" id="tab-impact">
+    <div id="impact-list"></div>
+  </section>
+
+  <!-- ================= 登记台 ================= -->
+  <section class="panel" id="tab-register">
+    <div class="register-grid">
+      <div class="card">
+        <h3>1. 注册对象</h3>
+        <form id="form-object" class="form">
+          <select name="type" required>
+            <option value="source">source 来源</option>
+            <option value="model">model 模型</option>
+            <option value="report">report 报表</option>
+          </select>
+          <input name="name" placeholder="对象名称，如 dwd_order_detail" required />
+          <input name="description" placeholder="描述（可选）" />
+          <button>注册对象</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>2. 注册字段</h3>
+        <form id="form-field" class="form">
+          <select name="objectId" required></select>
+          <input name="fieldName" placeholder="字段名称" required />
+          <input name="dataType" placeholder="数据类型，如 decimal / string" value="string" required />
+          <input name="description" placeholder="描述（可选）" />
+          <button>注册字段（fieldVersion=1）</button>
+        </form>
+      </div>
+
+      <div class="card wide">
+        <h3>3. 血缘批次登记（支持部分失败与循环检测）</h3>
+        <p class="hint">每行一条：来源字段ID、目标字段ID、转换表达式。表达式中的标识符必须能解析到已存活字段。</p>
+        <form id="form-lineage" class="form lineage-form">
+          <select name="sourceFieldId" required></select>
+          <select name="targetFieldId" required></select>
+          <input name="transformExpression" placeholder="如 COALESCE(order_amount, 0)" required />
+          <button>加入批次</button>
+        </form>
+        <table class="mini" id="batch-entries">
+          <thead><tr><th>#</th><th>来源字段</th><th>目标字段</th><th>表达式</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="row-actions">
+          <button id="btn-submit-batch" class="primary">提交整批登记</button>
+          <button id="btn-clear-batch" class="ghost">清空批次</button>
+        </div>
+        <div id="batch-result"></div>
+      </div>
+
+      <div class="card wide">
+        <h3>4. 改名 / 删除（自动触发影响分析）</h3>
+        <div class="form inline">
+          <select id="change-field"></select>
+          <input id="change-new-name" placeholder="新字段名（仅改名）" />
+          <input id="change-reason" placeholder="变更原因（可选）" />
+          <button id="btn-rename" class="warn">改名</button>
+          <button id="btn-delete" class="danger">删除</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
